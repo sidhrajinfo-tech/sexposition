@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Interactive Reveal App</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --bg: #2d3436;
+            --text: #dfe6e9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden; /* Prevent page scroll while scratching */
+        }
+
+        h1 { font-size: 1.5rem; margin-bottom: 10px; }
+
+        /* The main container that holds the image and canvas */
+        #scratch-container {
+            position: relative;
+            width: 300px; /* Mobile friendly width */
+            height: 400px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            overflow: hidden;
+            touch-action: none; /* Crucial for mobile scratching */
+        }
+
+        /* The secret image (revealed layer) */
+        .secret-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            color: #333;
+            z-index: 1;
+        }
+
+        .secret-content img {
+            max-width: 80%;
+            max-height: 70%;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+
+        .position-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        /* The scratchable canvas (top layer) */
+        #scratch-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: crosshair;
+        }
+
+        /* Navigation Buttons */
+        .nav-controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 20px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            min-width: 100px;
+        }
+
+        button:active { transform: scale(0.97); }
+        button:hover { background-color: var(--secondary); }
+        button:disabled { background-color: #636e72; cursor: not-allowed; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Scratch to Reveal</h1>
+
+    <div id="scratch-container">
+        <div class="secret-content">
+            <img id="position-image" src="" alt="Position Image">
+            <div id="position-label" class="position-name"></div>
+        </div>
+        
+        <canvas id="scratch-canvas" width="300" height="400"></canvas>
+    </div>
+
+    <div class="nav-controls">
+        <button id="prev-btn" onclick="changePosition(-1)">Previous</button>
+        <button id="next-btn" onclick="changePosition(1)">Next</button>
+    </div>
+
+    <script>
+        // --- DATA SETUP ---
+        // YOU MUST CHANGE THESE PLACEHOLDERS to your actual image paths and names
+        const positionsDeck = [
+            { name: "Position 1 Label", image: "https://bestsexpositions.com/pictures/2022/08/anal-sex-position-1538.gif" },
+            { name: "Position 2 Label", image: "https://bestsexpositions.com/pictures/2022/08/anal-sex-position-11.gif" },
+            { name: "Position 3 Label", image: "https://bestsexpositions.com/pictures/2022/08/anal-sex-2458965.gif" },
+            { name: "Position 4 Label", image: "https://bestsexpositions.com/pictures/2022/08/anal-sex-7439.gif" },
+            { name: "Position 5 Label", image: "https://bestsexpositions.com/pictures/2022/08/anal-sex-17.gif" },
+            { name: "Position 6 Label", image: "https://egl.phncdn.com/pics/gifs/049/001/951/(m=ldpwiqacxtE_Ai)(mh=Uszc1I62h3D3hhZo)49001951b.gif?validfrom=1762923600&validto=4891363200&hash=TWCnafZMLHQr%2BCRX4GoondRtrBU%3D" },
+            { name: "Position 7 Label", image: "https://imagex1.sx.cdn.live/images/pinporn/2017/10/29/18576798.gif?width=460" },
+            { name: "Position 8 Label", image: "https://cdn.xgifer.com/268821/dp-thumbnail.webp" },
+            { name: "Position 9 Label", image: "https://cdn.xgifer.com/271154/skinny-teen-anal-fuck-thumbnail.webp" },
+            { name: "Position 10 Label", image: "https://cdn.xgifer.com/182821/gagging-thumbnail.webp" },
+            { name: "Position 11 Label", image: "https://cdn.xgifer.com/129232/makeing-lisa-ann-my-fuckdoll-thumbnail.webp" },
+            { name: "Position 12 Label", image: "https://cdn.xgifer.com/53289/rolling-eyes-thumbnail.webp" },
+            { name: "Position 13 Label", image: "https://cdn.xgifer.com/46019/photo-thumbnail.webp" },
+            { name: "Position 14 Label", image: "https://cdn.xgifer.com/145467/hardcorenasties-tumblr-com-thumbnail.webp" },
+            { name: "Position 15 Label", image: "https://cdn.xgifer.com/70991/fuckpicsoverdose-tumblr-com-thumbnail.webp" },
+            { name: "Position 16 Label", image: "https://cdn.xgifer.com/263118/cowgirl-thumbnail.webp" },
+            { name: "Position 17 Label", image: "https://cdn.xgifer.com/247710/ride-it-thumbnail.webp" },
+            { name: "Position 18 Label", image: "https://cdn.xgifer.com/246161/perfect-body-thumbnail.webp" },
+            { name: "Position 19 Label", image: "https://cdn.xgifer.com/256467/lucky-guy-having-his-way-with-the-gorgeous-alex-grey-thumbnail.webp" }
+        ];
+
+        // --- STATE & CONFIG ---
+        let currentIndex = 0;
+        const SCRATCH_BRUSH_SIZE = 30; // Thickness of the scratch
+        const REVEAL_THRESHOLD = 50; // Percentage scratched needed to auto-reveal (0-100)
+        
+        // Element References
+        const container = document.getElementById('scratch-container');
+        const canvas = document.getElementById('scratch-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true }); // Optimized for reading pixels
+        const posImage = document.getElementById('position-image');
+        const posLabel = document.getElementById('position-label');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        let isDrawing = false;
+        let isRevealed = false;
+
+        // --- INITIALIZATION ---
+        function initCard() {
+            isRevealed = false;
+            const currentPos = positionsDeck[currentIndex];
+            
+            // 1. Update Content
+            posImage.src = currentPos.image;
+            posLabel.textContent = currentPos.name;
+
+            // 2. Prepare Canvas
+            ctx.globalCompositeOperation = 'source-over'; // Reset to default
+            
+            // Fill canvas with grey "scratch" color
+            ctx.fillStyle = '#b2bec3'; // Grey scratch surface
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add some noise texture (optional, makes it look more like a card)
+            ctx.fillStyle = '#636e72';
+            for(let i=0; i<500; i++){
+                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+            }
+
+            // Important: This mode allows us to "erase" parts of the canvas
+            ctx.globalCompositeOperation = 'destination-out'; 
+
+            updateButtons();
+        }
+
+        // --- SCRATCHING LOGIC ---
+        function getTouchPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Handle both Mouse and Touch events
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function scratch(e) {
+            if (!isDrawing || isRevealed) return;
+            e.preventDefault(); // Prevent scrolling on mobile
+
+            const { x, y } = getTouchPos(e);
+
+            ctx.lineWidth = SCRATCH_BRUSH_SIZE;
+            ctx.lineCap = 'round';
+            
+            // Draw the line (which erases because of destination-out)
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
+        function startScratch(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            const { x, y } = getTouchPos(e);
+            ctx.moveTo(x, y);
+            scratch(e); // Start scratch immediately at the first point
+        }
+
+        function stopScratch() {
+            if(!isDrawing) return;
+            isDrawing = false;
+            checkRevealPercentage();
+        }
+
+        // --- AUTO-REVEAL LOGIC ---
+        function checkRevealPercentage() {
+            // Get all pixel data
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            const totalPixels = pixels.length / 4; // Each pixel is 4 values (R,G,B,A)
+            let transparentPixels = 0;
+
+            // Count transparent pixels (where alpha channel is 0)
+            for (let i = 3; i < pixels.length; i += 4) {
+                if (pixels[i] === 0) {
+                    transparentPixels++;
+                }
+            }
+
+            const percentage = (transparentPixels / totalPixels) * 100;
+
+            if (percentage > REVEAL_THRESHOLD) {
+                // Auto-reveal the rest
+                isRevealed = true;
+                canvas.style.transition = 'opacity 0.5s ease';
+                canvas.style.opacity = '0';
+                // Wait for fade out, then clear z-index
+                setTimeout(() => { canvas.style.zIndex = '-1'; }, 500);
+            }
+        }
+
+        // --- NAVIGATION ---
+        function changePosition(direction) {
+            currentIndex += direction;
+            
+            // Bounds check (though buttons handle this)
+            if (currentIndex < 0) currentIndex = 0;
+            if (currentIndex >= positionsDeck.length) currentIndex = positionsDeck.length - 1;
+
+            // Reset canvas visibility before loading new data
+            canvas.style.transition = 'none';
+            canvas.style.opacity = '1';
+            canvas.style.zIndex = '2';
+            
+            // Small delay to ensure the reset happens visually before the new texture is drawn
+            setTimeout(initCard, 50);
+        }
+
+        function updateButtons() {
+            prevBtn.disabled = (currentIndex === 0);
+            nextBtn.disabled = (currentIndex === positionsDeck.length - 1);
+        }
+
+        // --- EVENT LISTENERS ---
+        // Mouse Events
+        canvas.addEventListener('mousedown', startScratch);
+        window.addEventListener('mousemove', scratch);
+        window.addEventListener('mouseup', stopScratch);
+
+        // Touch Events (Mobile)
+        canvas.addEventListener('touchstart', startScratch);
+        canvas.addEventListener('touchmove', scratch, { passive: false });
+        canvas.addEventListener('touchend', stopScratch);
+
+        // Start the App
+        initCard();
+
+    </script>
+</body>
+</html>
