@@ -2,75 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Grid Reveal App</title>
+
     <style>
         :root {
             --primary: #6c5ce7;
-            --secondary: #a29bfe;
-            --bg: #2d3436;
-            --text: #dfe6e9;
-            --card-bg: #353b48;
+            --primary-light: #a29bfe;
+            --bg: #f4f5f7;
+            --text: #222;
+            --muted: #666;
+            --card-bg: #ffffff;
+            --border: #e5e7eb;
+            --scratch-cover: #b2bec3;
+            --scratch-cover-dark: #636e72;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+        * {
             box-sizing: border-box;
         }
 
-        h1 { font-size: 1.8rem; margin-bottom: 20px; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .page-wrap {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            text-align: center;
+            margin: 10px 0 8px;
+            color: var(--text);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin: 0 0 22px;
+            font-size: 15px;
+        }
 
         /* --- GRID LAYOUT --- */
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 Columns Layout */
-            gap: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
             width: 100%;
-            max-width: 900px; /* Adjust based on your choice */
-            margin: 0 auto;
         }
 
         /* Small Preview Card in Grid */
         .grid-card {
-            background-color: var(--card-bg);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid transparent;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
 
         .grid-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.5);
-            border-color: var(--secondary);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 18px rgba(0, 0, 0, 0.12);
+            border-color: var(--primary-light);
         }
 
-        .grid-card .thumb-cover {
+        .thumb-cover {
             height: 120px;
-            background: linear-gradient(135deg, #b2bec3, #636e72);
-            border-radius: 8px;
+            background: #eef0f3;
+            border-radius: 9px;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: #2d3436;
             margin-bottom: 10px;
         }
 
-        .grid-card .card-title {
-            font-size: 0.95rem;
-            font-weight: bold;
+        .thumb-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -79,18 +107,16 @@
         /* --- POPUP OVERLAY --- */
         .popup-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
             z-index: 999;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.25s ease;
         }
 
         .popup-overlay.active {
@@ -98,113 +124,167 @@
             pointer-events: auto;
         }
 
-        /* Scratch Container inside Popup */
         .popup-content {
             position: relative;
-            background-color: transparent;
         }
 
         #scratch-container {
             position: relative;
             width: 300px;
             height: 400px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 110px);
+            aspect-ratio: 3 / 4;
+            border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
             overflow: hidden;
             touch-action: none;
+            background: white;
         }
 
-        /* Close Cross Button */
         .close-btn {
             position: absolute;
-            top: -50px;
+            top: -46px;
             right: 0;
-            background: none;
+            width: 38px;
+            height: 38px;
             border: none;
-            color: white;
-            font-size: 2.5rem;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #222;
+            font-size: 28px;
             cursor: pointer;
             line-height: 1;
-            transition: color 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
-        .close-btn:hover { color: #ff7675; }
 
-        /* Inside Content Layer */
+        .close-btn:hover {
+            background: #f1f1f1;
+        }
+
         .secret-content {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
+            z-index: 1;
+            background: #ffffff;
+            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: #fff;
-            color: #333;
-            z-index: 1;
+            padding: 18px;
+            text-align: center;
         }
 
         .secret-content img {
-            max-width: 80%;
-            max-height: 70%;
+            max-width: 88%;
+            max-height: 72%;
             object-fit: contain;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .position-name {
-            font-weight: bold;
-            font-size: 1.2rem;
+            font-weight: 700;
+            font-size: 20px;
             color: var(--primary);
         }
 
-        /* Canvas Layer */
         #scratch-canvas {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
             z-index: 2;
             cursor: crosshair;
         }
 
-        /* Responsive Columns for Mobile Screens */
-        @media (max-width: 600px) {
+        .no-image-text {
+            font-size: 15px;
+            color: var(--muted);
+            margin-bottom: 15px;
+        }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
             .grid-container {
-                grid-template-columns: repeat(2, 1fr); /* Mobile par 2 columns ho jayenge taaki cards bohot chhote na dikhein */
-                gap: 12px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 420px) {
+            body {
+                padding: 12px;
+            }
+
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .grid-card {
+                padding: 9px;
+                border-radius: 10px;
+            }
+
+            .thumb-cover {
+                height: 95px;
+            }
+
+            .card-title {
+                font-size: 13px;
+            }
+
+            #scratch-container {
+                width: 280px;
+                height: 373px;
             }
         }
     </style>
 </head>
+
 <body>
+    <main class="page-wrap">
+        <h1>Scratch Cards Gallery</h1>
+        <p class="subtitle">Click any card and scratch to reveal.</p>
 
-    <h1>Scratch Cards Gallery</h1>
-
-    <!-- Grid Container where all cards load dynamically -->
-    <div class="grid-container" id="cards-grid"></div>
+        <!-- Grid Container where all cards load dynamically -->
+        <div class="grid-container" id="cards-grid"></div>
+    </main>
 
     <!-- Scratch Popup Overlay -->
     <div class="popup-overlay" id="popup-overlay">
         <div class="popup-content">
-            <button class="close-btn" id="close-popup">&times;</button>
-            
+            <button class="close-btn" id="close-popup" aria-label="Close popup">&times;</button>
+
             <div id="scratch-container">
                 <div class="secret-content">
+                    <div id="no-image-text" class="no-image-text">Add image URL in positionsDeck</div>
                     <img id="position-image" src="" alt="Position Image">
                     <div id="position-label" class="position-name"></div>
                 </div>
-                <canvas id="scratch-canvas" width="300" height="400"></canvas>
+                <canvas id="scratch-canvas"></canvas>
             </div>
         </div>
     </div>
 
     <script>
         // --- DATA SETUP ---
-        // Yahan aap jitne chahein unlimited cards add kar sakte hain
+        // Yahan aap jitne chahein unlimited cards add kar sakte hain.
+        // Bas same format me new line add karo:
+        // { name: "Position 4", image: "your-image-link-here" },
+
         const positionsDeck = [
-		{ name: "Position 1", image: "https://cdn.xgifer.com/92924/harder-deeper-thumbnail.webp" },
+            { name: "Position 1", image: "https://cdn.xgifer.com/92924/harder-deeper-thumbnail.webp" },
             { name: "Position 2", image: "https://cdn.xgifer.com/111984/twin-tail-babe-thumbnail.webp" },
             { name: "Position 3", image: "https://cdn.xgifer.com/282100/only-best-doggy-style-here-thumbnail.webp" },
             { name: "Position 4", image: "https://cdn.xgifer.com/205358/dog-78-thumbnail.webp" },
@@ -238,117 +318,208 @@
 { name: "Position 32", image: "https://cdn.xgifer.com/205492/mi-suegra-goza-de-mi-verga-thumbnail.webp" },
 { name: "Position 33", image: "https://cdn.xgifer.com/193044/stunning-babe-blowjob-with-eye-contact-thumbnail.webp" },
 { name: "Position 34", image: "https://cdn.xgifer.com/185999/did-you-know-your-wife-could-do-this-thumbnail.webp" },
-{ name: "Position 35", image: "https://cdn.xgifer.com/226911/caliente-sexo-anal-thumbnail.webp" }
+{ name: "Position 35", image: "https://cdn.xgifer.com/226911/caliente-sexo-anal-thumbnail.webp" },
+{ name: "Position 36", image: "https://myteenwebcam.com/fapp/gifs/29c62de6105a65e4051d2b00d704b494.gif" },
+{ name: "Position 37", image: "https://myteenwebcam.com/fapp/gifs/42d22e4c8d0ab49b7815578cca1115d6.gif" },
+{ name: "Position 38", image: "https://myteenwebcam.com/fapp/gifs/654b4caa05799433a65a8b1a47a46b63.gif" },
+{ name: "Position 39", image: "https://myteenwebcam.com/fapp/gifs/7be0c5f69b70d67bffd9ae9d1ac37293.gif" },
+{ name: "Position 40", image: "https://myteenwebcam.com/fapp/gifs/75885491da13341e3239fd1d441b4594.gif" },
+{ name: "Position 41", image: "https://myteenwebcam.com/fapp/gifs/ee696adb97bb45b1cf76b033848e98c8.gif" },
+{ name: "Position 42", image: "https://myteenwebcam.com/fapp/gifs/bdec1db1d2395641eb2103fa23045c73.gif" },
+{ name: "Position 43", image: "https://myteenwebcam.com/fapp/gifs/f863476e94bd9cb44c3526f0a9e92e56.gif" },
+{ name: "Position 44", image: "https://myteenwebcam.com/fapp/gifs/ce4ddb61f9e4544dd2122c337fc67616.gif" },
+{ name: "Position 45", image: "https://myteenwebcam.com/fapp/gifs/2bf0d03afd33979eab4c2262332fdfd9.gif" },
+{ name: "Position 46", image: "https://myteenwebcam.com/fapp/gifs/8d3ca4de1380d860fd524369cf3a9659.gif" },
+{ name: "Position 47", image: "https://myteenwebcam.com/fapp/gifs/1598bb02230d0e9e1bd92a74a87d8e09.gif" },
+{ name: "Position 48", image: "https://myteenwebcam.com/fapp/gifs/63ad0f8e9fbc4404e2bd2b774d8e9e7c.gif" },
+{ name: "Position 49", image: "https://myteenwebcam.com/fapp/gifs/b9a456a8877ef645c5a6257e4c9f8254.gif" },
+{ name: "Position 50", image: "https://myteenwebcam.com/fapp/gifs/92d1023586d724951db19e7d9a74258a.gif" },
+{ name: "Position 51", image: "https://myteenwebcam.com/fapp/gifs/425696b487cee649feba44914357b2ab.gif" },
+{ name: "Position 52", image: "https://myteenwebcam.com/fapp/gifs/425696b487cee649feba44914357b2ab.gif" },
+{ name: "Position 53", image: "https://myteenwebcam.com/fapp/gifs/ecb66dacdfc55d9e5a4a07ce5a15f8a6.gif" },
+{ name: "Position 54", image: "https://myteenwebcam.com/fapp/gifs/9d3b948767dd6ad55dc0e44311bd755b.gif" },
+{ name: "Position 55", image: "https://myteenwebcam.com/fapp/gifs/4f6b8adaa6eed91b32f83eb08da309b4.gif" },
+{ name: "Position 56", image: "https://myteenwebcam.com/fapp/gifs/c215204b2436ff873c873b095bc58605.gif" },
+{ name: "Position 57", image: "https://myteenwebcam.com/fapp/gifs/eaec7d4b275262f9ae33311f988886bd.gif" },
+{ name: "Position 58", image: "https://myteenwebcam.com/fapp/gifs/f7fbfbfbceecfa0699940ea55e5dba68.gif" },
+{ name: "Position 59", image: "https://myteenwebcam.com/fapp/gifs/1f4b3bd73e1b1a73667630d3b8e48502.gif" },
+{ name: "Position 60", image: "https://myteenwebcam.com/fapp/gifs/f0bd4031dfa4f8d2e62a3dd38aca4aec.gif" },
+{ name: "Position 61", image: "https://myteenwebcam.com/fapp/gifs/dae0e422a4e340e1812e651aab9bfe49.gif" },
+{ name: "Position 62", image: "https://myteenwebcam.com/fapp/gifs/9c47070a2257087f891c7506ba39b329.gif" },
+{ name: "Position 63", image: "https://myteenwebcam.com/fapp/gifs/43cdef0fdd7a3ace31d121868ffd158f.gif" },
+{ name: "Position 64", image: "https://myteenwebcam.com/fapp/gifs/3950497dd0e889d0d3fdc39af4fc4865.gif" },
+{ name: "Position 65", image: "https://myteenwebcam.com/fapp/gifs/852d6191e762d4c5ebead44dc6a60723.gif" },
+{ name: "Position 66", image: "https://myteenwebcam.com/fapp/gifs/2884b4adad00d45f22f168b3b3f2bc1f.gif" },
+{ name: "Position 67", image: "https://myteenwebcam.com/fapp/gifs/d2c866d7b7cdc2425b67ccb9157465d0.gif" },
+{ name: "Position 68", image: "https://myteenwebcam.com/fapp/gifs/5f0685ad3da425dd45f02389ecfef4d1.gif" },
+{ name: "Position 69", image: "https://myteenwebcam.com/fapp/gifs/2d011b8629d31e994791b7a237fc3e92.gif" },
+{ name: "Position 70", image: "https://myteenwebcam.com/fapp/gifs/1cb362b0a59e5d6bd6b344dfd8d160a0.gif" }
         ];
+
+        // Same image grid thumbnail ke liye.
+        // Agar aap card-wise thumbnail chahte ho to card.image use kar sakte ho.
+        const defaultThumbImage = "https://png.pngtree.com/png-vector/20191206/ourmid/pngtree-sexy-bikini-women-vector-logo-design-png-image_2076520.jpg";
 
         // --- STATE & CONFIG ---
         let activeIndex = null;
-        const SCRATCH_BRUSH_SIZE = 30; 
-        const REVEAL_THRESHOLD = 50; 
-        
+        const SCRATCH_BRUSH_SIZE = 30;
+        const REVEAL_THRESHOLD = 50;
+
         // Element References
-        const cardsGrid = document.getElementById('cards-grid');
-        const popupOverlay = document.getElementById('popup-overlay');
-        const closePopupBtn = document.getElementById('close-popup');
-        const canvas = document.getElementById('scratch-canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        const posImage = document.getElementById('position-image');
-        const posLabel = document.getElementById('position-label');
+        const cardsGrid = document.getElementById("cards-grid");
+        const popupOverlay = document.getElementById("popup-overlay");
+        const closePopupBtn = document.getElementById("close-popup");
+        const scratchContainer = document.getElementById("scratch-container");
+        const canvas = document.getElementById("scratch-canvas");
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const posImage = document.getElementById("position-image");
+        const posLabel = document.getElementById("position-label");
+        const noImageText = document.getElementById("no-image-text");
 
         let isDrawing = false;
         let isRevealed = false;
 
-        // --- GENRATE GRID CARDS ---
+        // --- GENERATE GRID CARDS ---
         function generateGrid() {
-            cardsGrid.innerHTML = '';
+            cardsGrid.innerHTML = "";
+
             positionsDeck.forEach((card, index) => {
-                const cardEl = document.createElement('div');
-                cardEl.className = 'grid-card';
+                const cardEl = document.createElement("div");
+                cardEl.className = "grid-card";
+
                 cardEl.innerHTML = `
-                    <div class="thumb-cover"><img src="https://png.pngtree.com/png-vector/20191206/ourmid/pngtree-sexy-bikini-women-vector-logo-design-png-image_2076520.jpg" 
-     alt="Sunset over the mountains" 
-     width="253" 
-     height="120"></div>
+                    <div class="thumb-cover">
+                        <img src="${defaultThumbImage}" alt="${card.name}">
+                    </div>
                     <div class="card-title">${card.name}</div>
                 `;
-                cardEl.onclick = () => openScratchPopup(index);
+
+                cardEl.addEventListener("click", () => openScratchPopup(index));
                 cardsGrid.appendChild(cardEl);
             });
+        }
+
+        // --- CANVAS SIZE FIX FOR MOBILE / HIGH DPI ---
+        function resizeCanvas() {
+            const rect = scratchContainer.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = Math.round(rect.width * dpr);
+            canvas.height = Math.round(rect.height * dpr);
+
+            canvas.style.width = rect.width + "px";
+            canvas.style.height = rect.height + "px";
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
 
         // --- OPEN POPUP & INIT CANVAS ---
         function openScratchPopup(index) {
             activeIndex = index;
             isRevealed = false;
-            
+
             const currentPos = positionsDeck[activeIndex];
-            posImage.src = currentPos.image;
+
             posLabel.textContent = currentPos.name;
 
-            // Reset canvas state
-            canvas.style.transition = 'none';
-            canvas.style.opacity = '1';
-            canvas.style.zIndex = '2';
-
-            // Canvas Fill
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.fillStyle = '#b2bec3'; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Texture Noise
-            ctx.fillStyle = '#636e72';
-            for(let i=0; i<500; i++){
-                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+            if (currentPos.image && currentPos.image.trim() !== "") {
+                posImage.src = currentPos.image;
+                posImage.style.display = "block";
+                noImageText.style.display = "none";
+            } else {
+                posImage.removeAttribute("src");
+                posImage.style.display = "none";
+                noImageText.style.display = "block";
             }
 
-            ctx.globalCompositeOperation = 'destination-out'; 
+            popupOverlay.classList.add("active");
+            document.body.style.overflow = "hidden";
 
-            // Show Popup
-            popupOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Stop background scroll
+            // Let popup render first, then set canvas size correctly
+            requestAnimationFrame(() => {
+                resizeCanvas();
+                resetScratchCover();
+            });
+        }
+
+        function resetScratchCover() {
+            const rect = scratchContainer.getBoundingClientRect();
+
+            canvas.style.transition = "none";
+            canvas.style.opacity = "1";
+            canvas.style.zIndex = "2";
+
+            ctx.globalCompositeOperation = "source-over";
+            ctx.clearRect(0, 0, rect.width, rect.height);
+
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--scratch-cover").trim();
+            ctx.fillRect(0, 0, rect.width, rect.height);
+
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--scratch-cover-dark").trim();
+            for (let i = 0; i < 450; i++) {
+                ctx.fillRect(Math.random() * rect.width, Math.random() * rect.height, 2, 2);
+            }
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 18px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Scratch Here", rect.width / 2, rect.height / 2);
+
+            ctx.globalCompositeOperation = "destination-out";
         }
 
         // --- CLOSE POPUP ---
         function closeScratchPopup() {
-            popupOverlay.classList.remove('active');
-            document.body.style.overflow = ''; // Restore scroll
+            popupOverlay.classList.remove("active");
+            document.body.style.overflow = "";
             activeIndex = null;
+            isDrawing = false;
         }
 
         // --- SCRATCH LOGIC ---
-        function getTouchPos(e) {
+        function getPointerPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
             };
         }
 
         function scratch(e) {
             if (!isDrawing || isRevealed || activeIndex === null) return;
-            e.preventDefault(); 
 
-            const { x, y } = getTouchPos(e);
+            e.preventDefault();
+
+            const { x, y } = getPointerPos(e);
             ctx.lineWidth = SCRATCH_BRUSH_SIZE;
-            ctx.lineCap = 'round';
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
             ctx.lineTo(x, y);
             ctx.stroke();
         }
 
         function startScratch(e) {
-            if(activeIndex === null) return;
+            if (activeIndex === null) return;
+
             isDrawing = true;
+            canvas.setPointerCapture(e.pointerId);
+
             ctx.beginPath();
-            const { x, y } = getTouchPos(e);
+            const { x, y } = getPointerPos(e);
             ctx.moveTo(x, y);
             scratch(e);
         }
 
-        function stopScratch() {
-            if(!isDrawing) return;
+        function stopScratch(e) {
+            if (!isDrawing) return;
+
             isDrawing = false;
+
+            try {
+                canvas.releasePointerCapture(e.pointerId);
+            } catch (error) {}
+
             checkRevealPercentage();
         }
 
@@ -365,29 +536,37 @@
 
             if (percentage > REVEAL_THRESHOLD) {
                 isRevealed = true;
-                canvas.style.transition = 'opacity 0.5s ease';
-                canvas.style.opacity = '0';
-                setTimeout(() => { canvas.style.zIndex = '-1'; }, 500);
+                canvas.style.transition = "opacity 0.5s ease";
+                canvas.style.opacity = "0";
+
+                setTimeout(() => {
+                    canvas.style.zIndex = "-1";
+                }, 500);
             }
         }
 
         // --- EVENT LISTENERS ---
-        closePopupBtn.onclick = closeScratchPopup;
+        closePopupBtn.addEventListener("click", closeScratchPopup);
 
-        // Close when clicking outside the scratch card container
-        popupOverlay.onclick = (e) => {
-            if(e.target === popupOverlay) closeScratchPopup();
-        };
+        popupOverlay.addEventListener("click", (e) => {
+            if (e.target === popupOverlay) closeScratchPopup();
+        });
 
-        // Mouse Events
-        canvas.addEventListener('mousedown', startScratch);
-        window.addEventListener('mousemove', scratch);
-        window.addEventListener('mouseup', stopScratch);
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeScratchPopup();
+        });
 
-        // Touch Events
-        canvas.addEventListener('touchstart', startScratch);
-        canvas.addEventListener('touchmove', scratch, { passive: false });
-        canvas.addEventListener('touchend', stopScratch);
+        canvas.addEventListener("pointerdown", startScratch);
+        canvas.addEventListener("pointermove", scratch);
+        canvas.addEventListener("pointerup", stopScratch);
+        canvas.addEventListener("pointercancel", stopScratch);
+
+        window.addEventListener("resize", () => {
+            if (popupOverlay.classList.contains("active")) {
+                resizeCanvas();
+                resetScratchCover();
+            }
+        });
 
         // Run Grid on Load
         generateGrid();
